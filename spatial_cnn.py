@@ -25,7 +25,9 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 parser = argparse.ArgumentParser(description='UCF101 spatial stream on resnet101')
 parser.add_argument('--epochs', default=500, type=int, metavar='N', help='number of total epochs')
 parser.add_argument('--batch-size', default=25, type=int, metavar='N', help='mini-batch size (default: 25)')
+#parser.add_argument('--batch-size', default=32, type=int, metavar='N', help='mini-batch size (default: 32)')
 parser.add_argument('--lr', default=5e-4, type=float, metavar='LR', help='initial learning rate')
+#parser.add_argument('--lr', default=1e-4, type=float, metavar='LR', help='initial learning rate')
 parser.add_argument('--evaluate', dest='evaluate', action='store_true', help='evaluate model on validation set')
 parser.add_argument('--resume', default='', type=str, metavar='PATH', help='path to latest checkpoint (default: none)')
 parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='manual epoch number (useful on restarts)')
@@ -33,14 +35,14 @@ parser.add_argument('--start-epoch', default=0, type=int, metavar='N', help='man
 def main():
     global arg
     arg = parser.parse_args()
-    print arg
+    print (arg)
 
     #Prepare DataLoader
     data_loader = dataloader.spatial_dataloader(
                         BATCH_SIZE=arg.batch_size,
                         num_workers=8,
-                        path='/home/ubuntu/data/UCF101/spatial_no_sampled/',
-                        ucf_list ='/home/ubuntu/cvlab/pytorch/ucf101_two_stream/github/UCF_list/',
+                        path='/content/jpegs_256/',
+                        ucf_list ='/content/drive/MyDrive/two_stream/two-stream-action-recognition/UCF_list/',
                         ucf_split ='01', 
                         )
     
@@ -143,7 +145,7 @@ class Spatial_CNN():
             # measure data loading time
             data_time.update(time.time() - end)
             
-            label = label.cuda(async=True)
+            label = label.cuda(non_blocking=True)
             target_var = Variable(label).cuda()
 
             # compute output
@@ -158,9 +160,12 @@ class Spatial_CNN():
 
             # measure accuracy and record loss
             prec1, prec5 = accuracy(output.data, label, topk=(1, 5))
-            losses.update(loss.data[0], data.size(0))
-            top1.update(prec1[0], data.size(0))
-            top5.update(prec5[0], data.size(0))
+            #losses.update(loss.data[0], data.size(0))
+            losses.update(loss.item(), data.size(0))
+            #top1.update(prec1[0], data.size(0))
+            #top5.update(prec5[0], data.size(0))
+            top1.update(prec1.item(), data.size(0))
+            top5.update(prec5.item(), data.size(0))
 
             # compute gradient and do SGD step
             self.optimizer.zero_grad()
@@ -192,11 +197,16 @@ class Spatial_CNN():
         self.dic_video_level_preds={}
         end = time.time()
         progress = tqdm(self.test_loader)
-        for i, (keys,data,label) in enumerate(progress):
+        #*********************#
+        with torch.no_grad():
+        #*********************#
+          for i, (keys,data,label) in enumerate(progress):
             
-            label = label.cuda(async=True)
-            data_var = Variable(data, volatile=True).cuda(async=True)
-            label_var = Variable(label, volatile=True).cuda(async=True)
+            label = label.cuda(non_blocking=True)
+            #data_var = Variable(data, volatile=True).cuda(non_blocking=True)
+            data_var = Variable(data).cuda(non_blocking=True)
+            #label_var = Variable(label, volatile=True).cuda(non_blocking=True)
+            label_var = Variable(label).cuda(non_blocking=True)
 
             # compute output
             output = self.model(data_var)
@@ -218,7 +228,8 @@ class Spatial_CNN():
 
         info = {'Epoch':[self.epoch],
                 'Batch Time':[round(batch_time.avg,3)],
-                'Loss':[round(video_loss,5)],
+                #'Loss':[round(video_loss,5)],
+                'Loss':[np.round(video_loss,5)],
                 'Prec@1':[round(video_top1,3)],
                 'Prec@5':[round(video_top5,3)]}
         record_info(info, 'record/spatial/rgb_test.csv','test')

@@ -3,14 +3,20 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 import torchvision.transforms as transforms
 import random
-from split_train_test_video import *
+from dataloader.split_train_test_video import *
 from skimage import io, color, exposure
+# for Five Crop
+#****************#
+import torch
+#****************#
 
 class spatial_dataset(Dataset):  
     def __init__(self, dic, root_dir, mode, transform=None):
  
-        self.keys = dic.keys()
-        self.values=dic.values()
+        #self.keys = dic.keys()
+        self.keys = list(dic.keys())
+        #self.values=dic.values()
+        self.values = list(dic.values())
         self.root_dir = root_dir
         self.mode =mode
         self.transform = transform
@@ -19,14 +25,27 @@ class spatial_dataset(Dataset):
         return len(self.keys)
 
     def load_ucf_image(self,video_name, index):
+      #******************************************#
+        if index // 1000 != 0:
+          index_temp = '00' + str(index)
+        elif index // 100 != 0:
+          index_temp = '000' + str(index)
+        elif index // 10 != 0:
+          index_temp = '0000' + str(index)
+        else:
+          index_temp = '00000' + str(index)
+      #******************************************#
         if video_name.split('_')[0] == 'HandstandPushups':
             n,g = video_name.split('_',1)
             name = 'HandStandPushups_'+g
-            path = self.root_dir + 'HandstandPushups'+'/separated_images/v_'+name+'/v_'+name+'_'
+            #path = self.root_dir + 'HandstandPushups'+'/separated_images/v_'+name+'/v_'+name+'_'
+            path = self.root_dir + 'v_' +video_name+'/'+ 'frame'
         else:
-            path = self.root_dir + video_name.split('_')[0]+'/separated_images/v_'+video_name+'/v_'+video_name+'_'
-         
-        img = Image.open(path +str(index)+'.jpg')
+            #path = self.root_dir + video_name.split('_')[0]+'/separated_images/v_'+video_name+'/v_'+video_name+'_'
+            path = self.root_dir + 'v_' +video_name+'/'+ 'frame'
+
+        #img = Image.open(path +str(index)+'.jpg')
+        img = Image.open(path + index_temp + '.jpg')
         transformed_img = self.transform(img)
         img.close()
 
@@ -38,9 +57,12 @@ class spatial_dataset(Dataset):
             video_name, nb_clips = self.keys[idx].split(' ')
             nb_clips = int(nb_clips)
             clips = []
-            clips.append(random.randint(1, nb_clips/3))
-            clips.append(random.randint(nb_clips/3, nb_clips*2/3))
-            clips.append(random.randint(nb_clips*2/3, nb_clips+1))
+            clips.append(random.randint(1, int(nb_clips/3)))
+            clips.append(random.randint(int(nb_clips/3), int(nb_clips*2/3)))
+            clips.append(random.randint(int(nb_clips*2/3), int(nb_clips+1)))
+            #clips.append(random.randint(1, nb_clips/3))
+            #clips.append(random.randint(nb_clips/3, nb_clips*2/3))
+            #clips.append(random.randint(nb_clips*2/3, nb_clips+1))
             
         elif self.mode == 'val':
             video_name, index = self.keys[idx].split(' ')
@@ -80,7 +102,7 @@ class spatial_dataloader():
 
     def load_frame_count(self):
         #print '==> Loading frame number of each video'
-        with open('dic/frame_count.pickle','rb') as file:
+        with open('dataloader/dic/frame_count.pickle','rb') as file:
             dic_frame = pickle.load(file)
         file.close()
 
@@ -110,25 +132,41 @@ class spatial_dataloader():
             self.dic_training[key] = self.train_video[video]
                     
     def val_sample20(self):
-        print '==> sampling testing frames'
+      # Modified to sample25 testing
+        print ('==> sampling testing frames')
         self.dic_testing={}
         for video in self.test_video:
             nb_frame = self.frame_count[video]-10+1
-            interval = int(nb_frame/19)
-            for i in range(19):
+            #interval = int(nb_frame/19)
+            interval = int(nb_frame/24)
+            #for i in range(19):
+            for i in range(24):
                 frame = i*interval
                 key = video+ ' '+str(frame+1)
                 self.dic_testing[key] = self.test_video[video]      
 
     def train(self):
+      # Five crop
+        #training_set = spatial_dataset(dic=self.dic_training, root_dir=self.data_path, mode='train', transform = transforms.Compose([
+        #         transforms.Resize(256),
+        #         transforms.FiveCrop([224, 224]),
+        #         transforms.Lambda(lambda crops: torch.stack([transforms.Normalize(
+        #             mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])(crop) for crop in crops]))
+        #        ]))
+
         training_set = spatial_dataset(dic=self.dic_training, root_dir=self.data_path, mode='train', transform = transforms.Compose([
-                transforms.RandomCrop(224),
+                #transforms.RandomCrop(224),
+                #transforms.RandomHorizontalFlip(),
+                # Add Centercrop and Verticalflip and colorjitter
+                transforms.CenterCrop(224),
                 transforms.RandomHorizontalFlip(),
+                #transforms.RandomVerticalFlip(),
+                transforms.ColorJitter(brightness=0.5,contrast=0.5),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
                 ]))
-        print '==> Training data :',len(training_set),'frames'
-        print training_set[1][0]['img1'].size()
+        print ('==> Training data :',len(training_set),'frames')
+        print (training_set[1][0]['img1'].size())
 
         train_loader = DataLoader(
             dataset=training_set, 
@@ -138,14 +176,14 @@ class spatial_dataloader():
         return train_loader
 
     def validate(self):
+     
         validation_set = spatial_dataset(dic=self.dic_testing, root_dir=self.data_path, mode='val', transform = transforms.Compose([
                 transforms.Scale([224,224]),
                 transforms.ToTensor(),
                 transforms.Normalize(mean=[0.485, 0.456, 0.406],std=[0.229, 0.224, 0.225])
                 ]))
-        
-        print '==> Validation data :',len(validation_set),'frames'
-        print validation_set[1][1].size()
+        print ('==> Validation data :',len(validation_set),'frames')
+        print (validation_set[1][1].size())
 
         val_loader = DataLoader(
             dataset=validation_set, 

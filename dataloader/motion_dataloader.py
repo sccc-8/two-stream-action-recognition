@@ -15,13 +15,15 @@ import torch.backends.cudnn as cudnn
 from torch.autograd import Variable
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-from split_train_test_video import *
+from dataloader.split_train_test_video import *
  
 class motion_dataset(Dataset):  
     def __init__(self, dic, in_channel, root_dir, mode, transform=None):
         #Generate a 16 Frame clip
-        self.keys=dic.keys()
-        self.values=dic.values()
+        #self.keys=dic.keys()
+        self.keys=list(dic.keys())
+        #self.values=dic.values()
+        self.values=list(dic.values())
         self.root_dir = root_dir
         self.transform = transform
         self.mode=mode
@@ -102,7 +104,7 @@ class Motion_DataLoader():
         
     def load_frame_count(self):
         #print '==> Loading frame number of each video'
-        with open('dic/frame_count.pickle','rb') as file:
+        with open('dataloader/dic/frame_count.pickle','rb') as file:
             dic_frame = pickle.load(file)
         file.close()
 
@@ -147,9 +149,13 @@ class Motion_DataLoader():
             mode='train',
             transform = transforms.Compose([
             transforms.Scale([224,224]),
+            # add extra transforms
+            #transforms.RandomCrop(224),
+            #transforms.RandomHorizontalFlip(),
+            #
             transforms.ToTensor(),
             ]))
-        print '==> Training data :',len(training_set),' videos',training_set[1][0].size()
+        print ('==> Training data :',len(training_set),' videos',training_set[1][0].size())
 
         train_loader = DataLoader(
             dataset=training_set, 
@@ -168,7 +174,7 @@ class Motion_DataLoader():
             transforms.Scale([224,224]),
             transforms.ToTensor(),
             ]))
-        print '==> Validation data :',len(validation_set),' frames',validation_set[1][1].size()
+        print ('==> Validation data :',len(validation_set),' frames',validation_set[1][1].size())
         #print validation_set[1]
 
         val_loader = DataLoader(

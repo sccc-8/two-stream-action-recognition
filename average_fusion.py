@@ -5,21 +5,26 @@ import torch
 from utils import *
 import dataloader
 
+
 if __name__ == '__main__':
 
     rgb_preds='record/spatial/spatial_video_preds.pickle'
     opf_preds = 'record/motion/motion_video_preds.pickle'
 
     with open(rgb_preds,'rb') as f:
-        rgb =pickle.load(f)
+        #rgb =pickle.load(f)
+        rgb = pickle.load(f,encoding='latin1')
     f.close()
     with open(opf_preds,'rb') as f:
-        opf =pickle.load(f)
+        #opf =pickle.load(f)
+        opf = pickle.load(f,encoding='latin1')
     f.close()
 
     dataloader = dataloader.spatial_dataloader(BATCH_SIZE=1, num_workers=1, 
-                                    path='/home/ubuntu/data/UCF101/spatial_no_sampled/', 
-                                    ucf_list='/home/ubuntu/cvlab/pytorch/ucf101_two_stream/github/UCF_list/',
+                                    #path='/home/ubuntu/data/UCF101/spatial_no_sampled/', 
+                                    path='/content/jpegs_256/',
+                                    #ucf_list='/home/ubuntu/cvlab/pytorch/ucf101_two_stream/github/UCF_list/',
+                                    ucf_list='/content/drive/MyDrive/two_stream/two-stream-action-recognition/UCF_list/',
                                     ucf_split='01')
     train_loader,val_loader,test_video = dataloader.run()
 
@@ -44,4 +49,4 @@ if __name__ == '__main__':
         
     top1,top5 = accuracy(video_level_preds, video_level_labels, topk=(1,5))     
                                 
-    print top1,top5
+    print (top1,top5)

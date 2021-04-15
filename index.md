@@ -18,7 +18,7 @@ This blog aims to describe our attempt to reproduce certain aspects of the paper
 
 ## Two-Stream Architecture
 
-![](D:\reproduce\two-stream-action-recognition\blog\conv.png)
+![](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/conv.png)
 
 Due to the fact that deep Convolutional Networks (ConvNets) performs well on image classification tasks, Karen Simonyan [1] aimed to use this type of neural network to achieve action recognition in video data. However, if we still choose to use consecutive stacked video frames as input to the network intuitively, it is hard to get a good result. The reason is that in this case, the network needs to learn spatio-temporal motion-dependent features implicitly, which may not be feasible for a certain network. Therefore, a new architecture was proposed to get higher performance in action recognition tasks in videos, which is called two-stream networks. 
 

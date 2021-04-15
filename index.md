@@ -18,11 +18,11 @@ This blog aims to describe our attempt to reproduce certain aspects of the paper
 
 ## Two-Stream Architecture
 
-![](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/conv.png)
+![two-stream](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/conv.png)
 
 Due to the fact that deep Convolutional Networks (ConvNets) performs well on image classification tasks, Karen Simonyan [1] aimed to use this type of neural network to achieve action recognition in video data. However, if we still choose to use consecutive stacked video frames as input to the network intuitively, it is hard to get a good result. The reason is that in this case, the network needs to learn spatio-temporal motion-dependent features implicitly, which may not be feasible for a certain network. Therefore, a new architecture was proposed to get higher performance in action recognition tasks in videos, which is called two-stream networks. 
 
-![](D:\reproduce\two-stream-action-recognition\blog\optical flow.png)
+![op-flow](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/optical%20flow.png)
 
 Generally, this network consists of two separate recognition streams (spatial and temporal), which are then combined by late fusion. This idea is based on the assumption that videos can be decomposed into spatial and temporal parts. The spatial part is in the form of individual frames of the video, which contains the information about scenes and objects. The temporal part is in the form of motion across multiple frames, which shows the movement of the observer and the objects. Accordingly, the spatial stream of the model can recognize actions from still video frames, since some actions are strongly related with certain objects. The temporal stream is able to perform action recognition in the form of dense optical flow. The input of the temporal stream can be seen as a set of displacement vector fields between several consecutive frames. It can display the motion between video frames explicitly, which makes the recognition task easier than previous methods.
 
@@ -39,15 +39,15 @@ We use the preprocessed data of UCF-101 as input data for spatial network and te
 
 For spatial input data, RGB frames are extracted from each video with a sampling rate of 10 and save them as .jpg images. The picture below shows the RGB frames from clip 01 of group 01 of “ApplyEyeMakeup” action class.
 
-![eye](D:\reproduce\two-stream-action-recognition\blog\eye.png)
+![eye](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/eye.png)
 
 For motion input data, 2-channel optical flow images are generated through [Flownet2.0](https://github.com/lmb-freiburg/flownet2-docker)  and the x and y channels are saved as .jpg images. To compute optical flow, multiple FlowNets are used in the complete architecture to compute the optical flow of two input images. Brightness Error is the difference between the first image and the second image computed with previously estimated flow.
 
-![fln](D:\reproduce\two-stream-action-recognition\blog\fln.png)
+![fln](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/fln.png)
 
 The picture below presents 9 consecutive  preprocessed optical flow image from clip 01 of group 01 of “ApplyEyeMakeup” action class. The bright contour in the figure indicates the moving hands in the video.
 
-![](D:\reproduce\two-stream-action-recognition\blog\1 (1).png)
+![temp_data](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/1%20(1).png)
 
 ## Original Code
 
@@ -86,7 +86,7 @@ Afterwards, we tried to implement different data augmentation methods to evaluat
 
 To evaluate the sensitivity to hyperparameters, it is hard to make some conclusions when fine-tuning after loading pre-trained model. Thus, we chose to train the model at the very beginning. We set the batch size to 32 with learning rate at 1e-4 and 2e-4 respectively, and we trained the model for 15 epochs. Still, we tried to increase the batch size to 64, however, due to the memory limitation of Google Colab GPU, we can not implement it at all. From the figure below, it is obvious that lower learning rate has better performance. Thus, we can conclude that the initial learning rate may influence the quality of the model to some extent.
 
-![myplot](D:\reproduce\two-stream-action-recognition\blog\myplot.png)
+![myplot](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/myplot.png)
 
 For the temporal stream, we loaded pre-trained model and fine-tuning it on our optical flow dataset for 30 epochs. The default batch size is 64 and learning rate is 1e-2, we changed them to 32 and 1e-4 respectively to see the impact. In this case, the same issue occurs when fine-tuning spatial network, the learning rate keeps being constant no matter how we change the initial learning rate. Therefore, the results present that larger batch size can improve the performance of the model. Also, we tried to figure out the influence of implementing data augmentation on optical flow dataset. The result of it is foreseen because the information in stacked optical flow dataset is not that comprehensible as still images, when extra transformations are implemented, some features may be difficult to learn. We planned to evaluate hyperparameters in temporal stream network at the beginning, however, the training of this type of network is a difficult job which needs much computational resources and time to achieve. We can not make any conclusions if we just train it for tens of epochs.
 
@@ -107,7 +107,7 @@ This code uses averaging fusion to combine two stream networks. And we achieve c
 
 In the validation process of the default spatial stream network, we observe that when there are more epochs tested, the loss of each epoch is fluctuating from 2.6 to 3.3. This also appears when we change the methods and hyperparameters of training. This phenomenon is strange and it could be a point we need to figure out in further experiments.
 
-![loss](D:\reproduce\two-stream-action-recognition\blog\loss.png)
+![loss](https://github.com/sccc-8/two-stream-action-recognition/blob/master/blog/loss.png)
 
 
 
@@ -122,3 +122,5 @@ The reproducibility of this paper is doubtful because the code of the original p
 ## References
 
 [1] [Simonyan, K., Zisserman, A.: Two-Stream Convolutional Networks for Action Recognition in Videos. In: Neural Information Processing Systems (NIPS) (2014)](https://arxiv.org/pdf/1406.2199.pdf)
+
+[2] https://github.com/jeffreyyihuang/two-stream-action-recognition

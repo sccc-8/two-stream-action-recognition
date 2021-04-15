@@ -123,4 +123,4 @@ The reproducibility of this paper is doubtful because the code of the original p
 
 [1] [Simonyan, K., Zisserman, A.: Two-Stream Convolutional Networks for Action Recognition in Videos. In: Neural Information Processing Systems (NIPS) (2014)](https://arxiv.org/pdf/1406.2199.pdf)
 
-[2] https://github.com/jeffreyyihuang/two-stream-action-recognition
+[2] [https://github.com/jeffreyyihuang/two-stream-action-recognition](https://github.com/jeffreyyihuang/two-stream-action-recognition)

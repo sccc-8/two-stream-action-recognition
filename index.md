@@ -10,11 +10,11 @@ This blog aims to describe our attempt to reproduce certain aspects of the paper
 
 ## Two-Stream Architecture
 
-![](./blog/conv.png)
+![](D:\reproduce\two-stream-action-recognition\blog\conv.png)
 
 Due to the fact that deep Convolutional Networks (ConvNets) performs well on image classification tasks, Karen Simonyan [1] aimed to use this type of neural network to achieve action recognition in video data. However, if we still choose to use consecutive stacked video frames as input to the network intuitively, it is hard to get a good result. The reason is that in this case, the network needs to learn spatio-temporal motion-dependent features implicitly, which may not be feasible for a certain network. Therefore, a new architecture was proposed to get higher performance in action recognition tasks in videos, which is called two-stream networks. 
 
-![](./blog/optical flow.png)
+![](D:\reproduce\two-stream-action-recognition\blog\optical flow.png)
 
 Generally, this network consists of two separate recognition streams (spatial and temporal), which are then combined by late fusion. This idea is based on the assumption that videos can be decomposed into spatial and temporal parts. The spatial part is in the form of individual frames of the video, which contains the information about scenes and objects. The temporal part is in the form of motion across multiple frames, which shows the movement of the observer and the objects. Accordingly, the spatial stream of the model can recognize actions from still video frames, since some actions are strongly related with certain objects. The temporal stream is able to perform action recognition in the form of dense optical flow. The input of the temporal stream can be seen as a set of displacement vector fields between several consecutive frames. It can display the motion between video frames explicitly, which makes the recognition task easier than previous methods.
 
@@ -31,15 +31,15 @@ We use the preprocessed data of UCF-101 as input data for spatial network and te
 
 For spatial input data, RGB frames are extracted from each video with a sampling rate of 10 and save them as .jpg images. The picture below shows the RGB frames from clip 01 of group 01 of “ApplyEyeMakeup” action class.
 
-![eye](./blog/eye.png)
+![eye](D:\reproduce\two-stream-action-recognition\blog\eye.png)
 
 For motion input data, 2-channel optical flow images are generated through [Flownet2.0](https://github.com/lmb-freiburg/flownet2-docker)  and the x and y channels are saved as .jpg images. To compute optical flow, multiple FlowNets are used in the complete architecture to compute the optical flow of two input images. Brightness Error is the difference between the first image and the second image computed with previously estimated flow.
 
-![fln](./blog/fln.png)
+![fln](D:\reproduce\two-stream-action-recognition\blog\fln.png)
 
 The picture below presents 9 consecutive  preprocessed optical flow image from clip 01 of group 01 of “ApplyEyeMakeup” action class. The bright contour in the figure indicates the moving hands in the video.
 
-![](./blog/1 (1).png)
+![](D:\reproduce\two-stream-action-recognition\blog\1 (1).png)
 
 ## Original Code
 
@@ -53,16 +53,30 @@ The data augmentation and normalization for training is described in the dataloa
 
 ## Experiments and Results
 
-| Method                                                       | Prec@1 |
-| ------------------------------------------------------------ | ------ |
-| Spatial Stream ConvNet [1]                                   | 73.0%  |
-| Spatial Stream (pretrained model)                            | 81.2%  |
-| pretrained + further training (batch_size=25, lr=5e-4)       | 80.4%  |
-| pretrained + further training (batch_size=32, lr=0.01)       | 79.1%  |
-| pretrained + further training (batch_size=32, lr=1e-4)       | 78.5%  |
-| pretrained + CenterCrop + VerticalFlip                       | 80.0%  |
-| pretrained + CenterCrop + VerticalFlip + ColorJitter(br=0.5, contract=0.5) | 81.9%  |
-| pretrained + CenterCrop + HorizontalFlip + ColorJitter(br=0.5, contract=0.5) | 81.9%  |
+| Method                                                       | Accuracy |
+| ------------------------------------------------------------ | -------- |
+| Spatial Stream ConvNet [1]                                   | 73.0%    |
+| Spatial Stream (pretrained model)                            | 81.2%    |
+| pretrained + further training (batch_size=25, lr=5e-4)       | 80.4%    |
+| pretrained + further training (batch_size=32, lr=0.01)       | 79.1%    |
+| pretrained + further training (batch_size=32, lr=1e-4)       | 78.5%    |
+| pretrained + CenterCrop + VerticalFlip                       | 80.0%    |
+| pretrained + CenterCrop + VerticalFlip + ColorJitter(br=0.5, contract=0.5) | 81.9%    |
+| pretrained + CenterCrop + HorizontalFlip + ColorJitter(br=0.5, contract=0.5) | 81.9%    |
+
+| Method                                                 | Accuracy |
+| ------------------------------------------------------ | -------- |
+| Temporal Stream ConvNet [1]                            | 83.7%    |
+| Temporal Stream (pretrained model)                     | 79.6%    |
+| pretrained + further training (batch_size=64, lr=1e-2) | 79.9%    |
+| pretrained + further training (batch_size=32, lr=1e-4) | 79.2%    |
+| pretrained + RandomCrop + HorizontalFlip               | 76.3%    |
+
+| Method                                     | Accuracy |
+| ------------------------------------------ | -------- |
+| Two-stream model (fusion by averaging) [1] | 86.9%    |
+| Two-stream model (pretrained)              | 88.3%    |
+|                                            |          |
 
 
 

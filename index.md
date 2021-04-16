@@ -69,7 +69,13 @@ First of all, we used pretrained models (spatial and temporal) provided in the r
 | Motion cnn     | 79.4%    |
 | Average Fusion | 88.5%    |
 
-We could obtain similar results using their pretrained model. Then we attempted to further fine-tune the model on our spatial UCF101 dataset. The default batch size in this code is 25 with 5e-4 as initial learning rate. We continued to use this configuration to train 10 more epochs considering the extremely long training time. Similarly, we changed the batch size to 32 and set the initial learning rate to 0.01 and 0.0001 respectively. From the results, we can observe that further fine-tuning may not improve the performance of the model, which even gets worse. Meanwhile, when trying different hyperparameters, we also found that changing initial learning rate cannot affect the model although there is a discrepancy in the results. Because no matter how we change the initial learning rate, the learning rate during further training will be a constant, which is 5e-9. We suppose that this learning rate originates from the pretrained model, and though we changed the initial learning rate, it can not be optimized in this further training procedure.
+We could obtain similar results using their pretrained model. 
+
+### Spatial Stream Network Fine-tuning
+
+Then we attempted to further fine-tune the model on our spatial UCF101 dataset. The default batch size in this code is 25 with 5e-4 as initial learning rate. We continued to use this configuration to train 10 more epochs considering the extremely long training time. Similarly, we changed the batch size to 32 and set the initial learning rate to 0.01 and 0.0001 respectively. From the results, we can observe that further fine-tuning may not improve the performance of the model, which even gets worse. Meanwhile, when trying different hyperparameters, we also found that changing initial learning rate cannot affect the model although there is a discrepancy in the results. Because no matter how we change the initial learning rate, the learning rate during further training will be a constant, which is 5e-9. We suppose that this learning rate originates from the pretrained model, and though we changed the initial learning rate, it can not be optimized in this further training procedure.
+
+### Spatial Stream Input Data Augmentation
 
 Afterwards, we tried to implement different data augmentation methods to evaluate the performance of the network on different datasets. Still, we trained and validated for 10 more epochs after loading the pre-trained model. As we mentioned before, the initial transformations in the spatial stream network are random cropping, random flipping horizontally and normalization. We firstly added two more transformations which are center cropping and random vertical flipping respectively. Then, we substituted initial transformation with center crop, vertical flip and color jitter. Finally, we use center crop, horizontal flip and color jitter as transformations. The results demonstrate that the performance degrades when adding center crop and vertical flip. However, if we directly use center crop and vertical flip with color jitter instead of random crop and horizontal flip, we can get a better and robust model.
 
@@ -84,9 +90,17 @@ Afterwards, we tried to implement different data augmentation methods to evaluat
 | pretrained + CenterCrop + VerticalFlip + ColorJitter(br=0.5, contract=0.5) | 81.9%    |
 | pretrained + CenterCrop + HorizontalFlip + ColorJitter(br=0.5, contract=0.5) | 81.9%    |
 
+### Spatial Stream Hyperparameters Evaluation
+
 To evaluate the sensitivity to hyperparameters, it is hard to make some conclusions when fine-tuning after loading pre-trained model. Thus, we chose to train the model at the very beginning. We set the batch size to 32 with learning rate at 1e-4 and 2e-4 respectively, and we trained the model for 15 epochs. Still, we tried to increase the batch size to 64, however, due to the memory limitation of Google Colab GPU, we can not implement it at all. From the figure below, it is obvious that lower learning rate has better performance. Thus, we can conclude that the initial learning rate may influence the quality of the model to some extent.
 
 <img src="index.assets/myplot.png">
+
+In the validation process of the default spatial stream network, we observe that when there are more epochs tested, the loss of each epoch is fluctuating from 2.6 to 3.3. This also appears when we change the methods and hyperparameters of training. This phenomenon is strange and it could be a point we need to figure out in further experiments.
+
+<img src= "index.assets/loss.png">
+
+### Temporal Stream Network Evaluation
 
 For the temporal stream, we loaded pre-trained model and fine-tuning it on our optical flow dataset for 30 epochs. The default batch size is 64 and learning rate is 1e-2, we changed them to 32 and 1e-4 respectively to see the impact. In this case, the same issue occurs when fine-tuning spatial network, the learning rate keeps being constant no matter how we change the initial learning rate. Therefore, the results present that larger batch size can improve the performance of the model. Also, we tried to figure out the influence of implementing data augmentation on optical flow dataset. The result of it is foreseen because the information in stacked optical flow dataset is not that comprehensible as still images, when extra transformations are implemented, some features may be difficult to learn. We planned to evaluate hyperparameters in temporal stream network at the beginning, however, the training of this type of network is a difficult job which needs much computational resources and time to achieve. We can not make any conclusions if we just train it for tens of epochs.
 
@@ -98,18 +112,14 @@ For the temporal stream, we loaded pre-trained model and fine-tuning it on our o
 | pretrained + further training (batch_size=32, lr=1e-4) | 79.2%    |
 | pretrained + RandomCrop + HorizontalFlip               | 76.3%    |
 
+### Two Stream Averaging Fusion Evaluation
+
 This code uses averaging fusion to combine two stream networks. And we achieve competitive results compared with the paper.
 
 | Method                                     | Accuracy |
 | ------------------------------------------ | -------- |
 | Two-stream model (fusion by averaging) [1] | 86.9%    |
 | Two-stream model (pretrained)              | 88.3%    |
-
-In the validation process of the default spatial stream network, we observe that when there are more epochs tested, the loss of each epoch is fluctuating from 2.6 to 3.3. This also appears when we change the methods and hyperparameters of training. This phenomenon is strange and it could be a point we need to figure out in further experiments.
-
-<img src= "index.assets/loss.png">
-
-
 
 ## Conclusion
 

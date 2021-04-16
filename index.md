@@ -2,9 +2,9 @@
 
 Authors:
 
-Chen Sun (5262763)
+Chen Sun: c.sun-8@student.tudelft.nl (5262763)
 
-Jinyun Long (5352177)
+Jinyun Long: j.long-3@student.tudelft.nl (5352177)
 
 [Link to code](https://github.com/sccc-8/two-stream-action-recognition).
 
